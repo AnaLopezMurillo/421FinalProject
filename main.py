@@ -9,7 +9,7 @@ def login_layout():
         [sg.Text("Login Page", font='Bold', justification='center', expand_x=True)],
         [sg.Text('Username'), sg.InputText(key='-USERNAME-')],
         [sg.Text('Password'), sg.InputText(password_char='*', key='-PASSWORD-')],
-        [sg.Button("Login"), sg.Button("Exit")]
+        [sg.Button("Exit"), sg.Text("", expand_x=True), sg.Button("Login")]
     ]
 
 def home_layout():
