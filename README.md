@@ -22,6 +22,7 @@ Posts: One to many relationship w/ users
 User:
 - Id
 - Name
+- Overall score (reddit karma)
 - Password (keep secure)
 
 Relationship table (interactions):
@@ -38,3 +39,14 @@ Secure Password Storage:
 
 Procedure:
 - Function for the database - query you would make and making it a function
+
+## Pages
+- Login
+    - and register, little box at bottom if haven't registered
+- Posts
+    - search bar at top - filters instead of retrieves
+    - big plus button on the page with adding a post
+    - 
+- Profile
+    - posts you've interacted 
+    - shows your upvotes/downvotes
