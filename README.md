@@ -7,6 +7,21 @@ https://docs.pysimplegui.com/en/latest/
 ### Backend:
 Docker with MySQL instance
 
+To setup the database for the first time, run:
+```sh
+source setup.sh
+```
+
+Once you've done this, you can run the db by running
+```sh
+source db.sh
+```
+
+Once you're done with the database, or if you want to close docker or shut down your computer, run the following:
+```sh
+source stop.sh
+```
+
 ### Database:
 
 
