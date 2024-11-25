@@ -1,4 +1,7 @@
 import PySimpleGUI as sg
+import db
+
+cursor = db.get_cursor()
 
 # vars
 username = ''
@@ -60,3 +63,4 @@ while True:
     # password = values[1]
     
 window.close()
+db.close_cursor()
