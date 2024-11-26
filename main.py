@@ -10,15 +10,15 @@ password = ''
 def login_layout():
     return [
         [sg.Text("Login Page", font='Bold', justification='center', expand_x=True)],
-        [sg.Text('Username'), sg.InputText(key='-USERNAME-')],
-        [sg.Text('Password'), sg.InputText(password_char='*', key='-PASSWORD-')],
+        [sg.Text('Username', justification='center', expand_x=True), sg.InputText(key='-USERNAME-')],
+        [sg.Text('Password', justification='center', expand_x=True), sg.InputText(password_char='*', key='-PASSWORD-')],
         [sg.Button("Exit"), sg.Text("", expand_x=True), sg.Button("Login")]
     ]
 
 def home_layout():
     return [
         [sg.Button("Back to Login"), sg.Text("", key='-USERNAME-DISPLAY-', font='bold', justification='center', expand_x=True), sg.Button("Profile"),],
-        [sg.Text("Posts will go here")],
+        [sg.Text("Posts will go here"),sg.Button("Add Record"),],
         [sg.Button("Exit")]
     ]
 
@@ -29,9 +29,17 @@ def profile_layout():
         [sg.Button("Exit")]
     ]
 
+def add_record_layout():
+    return [
+        [sg.Button("Home"), sg.Text("Add Record", font='bold', justification='center', expand_x=True), sg.Button("Profile")],
+        [sg.Text("Term", justification='center', expand_x=True), sg.InputText(key='-TERM-')],
+        [sg.Text("Definition",justification='center', expand_x=True), sg.InputText(key='-DEF-')],
+        [sg.Text("", key='-ADDRECORD-DISPLAY-')],
+        [sg.Button("Exit"), sg.Text("", expand_x=True), sg.Button("Submit")]
+    ]
+
 # Set the initial window with the main layout
 window = sg.Window("Router Example", login_layout())
-
 
 # Event loop for routing
 while True:
@@ -40,13 +48,14 @@ while True:
     if event == sg.WINDOW_CLOSED or event == "Exit":
         break
     elif event == "Login":
+        window.close()
         # grab user and password
         username = values['-USERNAME-']
         password = values['-PASSWORD-']
-
-        window.close()
         window = sg.Window("Home", home_layout(), finalize=True)
-        window['-USERNAME-DISPLAY-'].update(username + "'s Home")   # this changes the title of the window to the user's name
+        # this changes the title of the window to the user's name
+        # probably also how we will want to update user info through GET calls
+        window['-USERNAME-DISPLAY-'].update(username + "'s Home")   
 
     elif event == "Profile":
         window.close()
@@ -58,6 +67,15 @@ while True:
         window.close()
         window = sg.Window("Home", home_layout(), finalize=True)
         window['-USERNAME-DISPLAY-'].update(username + "'s Home")
+    elif event == "Add Record":
+        window.close()
+        window = sg.Window("Record", add_record_layout(), finalize=True)
+    elif event == "Submit":
+        # this is where we push information to for new record to database
+        print("Term: " +  str(values['-TERM-']))
+        print("Definition: " +  str(values['-DEF-']))
+
+        window['-ADDRECORD-DISPLAY-'].update("Term " + str(values['-TERM-']) + " added!")
 
     # name = values[0]
     # password = values[1]
