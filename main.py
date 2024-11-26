@@ -1,7 +1,7 @@
 import PySimpleGUI as sg
-# import db
+import db
 
-# cursor = db.get_cursor()
+cursor = db.get_cursor()
 
 # vars
 username = ''
