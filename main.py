@@ -1,6 +1,7 @@
 import PySimpleGUI as sg
 import db
 
+db.init()
 cursor = db.get_cursor()
 
 # vars
@@ -48,14 +49,15 @@ while True:
     if event == sg.WINDOW_CLOSED or event == "Exit":
         break
     elif event == "Login":
-        window.close()
         # grab user and password
         username = values['-USERNAME-']
         password = values['-PASSWORD-']
-        window = sg.Window("Home", home(), finalize=True)
-        # this changes the title of the window to the user's name
-        # probably also how we will want to update user info through GET calls
-        window['-USERNAME-DISPLAY-'].update(username + "'s Home")   
+        if db.login_user(username, password):
+            window.close()
+            window = sg.Window("Home", home(), finalize=True)
+            # this changes the title of the window to the user's name
+            # probably also how we will want to update user info through GET calls
+            window['-USERNAME-DISPLAY-'].update(username + "'s Home")   
 
     elif event == "Profile":
         window.close()
