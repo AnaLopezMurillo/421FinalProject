@@ -64,17 +64,29 @@ if __name__ == "__main__":
 
     init_cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
     init_cursor.execute(f"USE {DB_NAME}")
-    init_cursor.execute(db_setup_tables.create_user_table)
-    init_cursor.execute(db_setup_tables.create_post_table)
-    init_cursor.execute(db_setup_tables.create_interactions_table)
-    print("Tables created successfully")
+    try:
+        init_cursor.execute(db_setup_tables.create_user_table)
+        print("Users table created successfully.")
+    except mysql.connector.errors.ProgrammingError:
+        print("Users table already exists")
+    try:
+        init_cursor.execute(db_setup_tables.create_post_table)
+        print("Posts table created successfully.")
+    except mysql.connector.errors.ProgrammingError:
+        print("Posts table already exists")
+    try:
+        init_cursor.execute(db_setup_tables.create_interactions_table)
+        print("Interactions table created successfully.")
+    except mysql.connector.errors.ProgrammingError:
+        print("Interactions table already exists")
+    print("Tables created successfully.")
 
-    print("Databases:")
+    print("\nDatabases:")
     init_cursor.execute("SHOW DATABASES")
     for x in init_cursor:
         print(x)
 
-    print("Tables:")
+    print("\nTables:")
     init_cursor.execute("SHOW TABLES")
     for x in init_cursor:
         print(x)
