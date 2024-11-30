@@ -34,9 +34,10 @@ def create_user(name: str, score: int, password: str):
     """Creates a user in the database."""
     cursor.execute(f"INSERT INTO users (name, score, password) VALUES ('{name}', {score}, '{password}')")
     
-def create_post(word: str, definition: str, upvotes: int, downvotes: int, uid: int):
+def create_post(word: str, definition: str, uid: int):
     """Creates a post in the database."""
-    cursor.execute(f"INSERT INTO posts (word, definition, upvotes, downvotes, uid) VALUES ('{word}', '{definition}', {upvotes}, {downvotes}, {uid})")
+    cursor.execute("CALL create_post(%s, %s, %s)", (word, definition, uid))
+    # cursor.execute(f"INSERT INTO posts (word, definition, upvotes, downvotes, uid) VALUES ('{word}', '{definition}', {upvotes}, {downvotes}, {uid})")
     
 def create_interaction(uid: int, pid: int, action: bool):
     """Creates an interaction in the database."""
@@ -80,6 +81,21 @@ if __name__ == "__main__":
     except mysql.connector.errors.ProgrammingError:
         print("Interactions table already exists")
     print("Tables created successfully.")
+    
+    
+    try:
+        init_cursor.execute(db_setup_tables.create_user_procedure)
+        print("User procedure created successfully.")
+    except mysql.connector.errors.ProgrammingError:
+        print("User procedure already exists")
+    
+    try:
+        init_cursor.execute(db_setup_tables.create_post_procedure)
+        print("Post procedure created successfully.")
+    except mysql.connector.errors.ProgrammingError:
+        print("Post procedure already exists")
+        
+    print("Procedures created successfully.")
 
     print("\nDatabases:")
     init_cursor.execute("SHOW DATABASES")
