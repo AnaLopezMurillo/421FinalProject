@@ -40,7 +40,8 @@ def add_record():
     ]
 
 # Set the initial window with the main layout
-window = sg.Window("Router Example", login())
+window = sg.Window("Router Example", login(), finalize=True)
+window['-PASSWORD-'].bind("<Return>", "Login")
 
 # Event loop for routing
 while True:
@@ -48,7 +49,7 @@ while True:
 
     if event == sg.WINDOW_CLOSED or event == "Exit":
         break
-    elif event == "Login":
+    elif event == "Login" or event == ("-PASSWORD-" + "Login"):
         # grab user and password
         username = values['-USERNAME-']
         password = values['-PASSWORD-']
