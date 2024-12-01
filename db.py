@@ -96,6 +96,14 @@ if __name__ == "__main__":
         print("Post procedure already exists")
         
     print("Procedures created successfully.")
+    
+    try:
+        init_cursor.execute("INSERT INTO users (name, password) VALUES ('test', '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08')")
+        print("Test user created successfully.")
+    except mysql.connector.errors.IntegrityError:
+        print("Test user already exists")
+        
+    init_db.commit()
 
     print("\nDatabases:")
     init_cursor.execute("SHOW DATABASES")
