@@ -10,11 +10,23 @@
 
 create_user_table = """CREATE TABLE users (
 uid int NOT NULL AUTO_INCREMENT,
-name text NOT NULL,
+name text NOT NULL unique,
 score int NOT NULL DEFAULT 0,
 password text NOT NULL,
 PRIMARY KEY (uid)
 )
+"""
+
+create_trigger_name = """
+    CREATE TRIGGER same_name
+    BEFORE INSERT ON users
+    FOR EACH ROW
+    BEGIN
+        IF (SELECT COUNT(*) FROM users WHERE name = NEW.name) > 0 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Duplicate name is not allowed';
+        END IF;
+    END;
 """
 
 create_user_procedure = """CREATE PROCEDURE create_user(IN name TEXT, IN password TEXT)
@@ -22,7 +34,6 @@ BEGIN
     INSERT INTO users (name, password) VALUES (name, password);
 END
 """
-
 
 # Posts table
 create_post_table = """CREATE TABLE posts (
