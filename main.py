@@ -61,7 +61,8 @@ def profile(posts):
                     layout=[
                         [sg.Text(f"Term: {post.word}", font='bold')],
                         [sg.Text(f"Definition: {post.definition}")],
-                        [sg.Text(f"Upvotes: {post.upvotes}", text_color='#32CD32'), sg.Text(f"Downvotes: {post.downvotes}", text_color='red')]
+                        [sg.Text(f"Upvotes: {post.upvotes}", text_color='#32CD32'), sg.Text(f"Downvotes: {post.downvotes}", text_color='red')],
+                        [sg.Button("Delete", key=f"DELETE_{i}")]
                     ],
                     title="Post",
                     relief=sg.RELIEF_SUNKEN,
@@ -113,6 +114,17 @@ while True:
         posts = db.get_posts()  # Refresh posts
         window.close()
         window = sg.Window("Home", home(posts), finalize=True)
+    elif event.startswith("DELETE_"):
+        index = int(event.split("_")[1])
+        user_posts = db.get_posts_by_user(uid)  # Refresh user posts
+        if index < len(user_posts):
+            post = user_posts[index]
+            db.delete_post(post.pid)
+            user_posts = db.get_posts_by_user(uid)  # Refresh user posts again after deletion
+            window.close()
+            window = sg.Window("Profile", profile(user_posts), finalize=True)
+        else:
+            sg.popup("Error: Post not found.")
     elif event == "Login" or event == ("-PASSWORD-" + "Login"):
         username = values['-USERNAME-']
         password = values['-PASSWORD-']

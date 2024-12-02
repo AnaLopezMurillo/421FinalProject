@@ -175,6 +175,12 @@ def get_user_id(username: str):
         return result[0]
     return None
 
+def delete_post(pid: int):
+    """Deletes a post from the database."""
+    query = "DELETE FROM posts WHERE pid = %s"
+    cursor.execute(query, (pid,))
+    mydb.commit()
+
 if __name__ == "__main__":
     # Initializes the database and creates the tables.
     init_db = mysql.connector.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
