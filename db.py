@@ -20,7 +20,12 @@ cursor: mysql.connector.cursor.MySQLCursor = None
 def init(): 
     """Initializes the database connection and cursor."""
     global mydb, cursor
-    mydb = mysql.connector.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD)
+    mydb = mysql.connector.connect(
+        host=DB_HOST, 
+        user=DB_USER, 
+        password=DB_PASSWORD,
+        database=DB_NAME
+    )
     cursor = mydb.cursor()
     cursor.execute(f"USE {DB_NAME}")
 
@@ -37,6 +42,7 @@ def create_user(name: str, score: int, password: str):
     hashed_password = hashlib.sha256(password.encode()).hexdigest()   
     if not login_user(name, password):
         cursor.execute(f"INSERT INTO users (name, score, password) VALUES ('{name}', {score}, '{hashed_password}')")
+        print(f"User {name} created successfully.")
         mydb.commit()
       
 def create_post(word: str, definition: str, uid: int):
@@ -55,40 +61,98 @@ def create_interaction(uid: int, pid: int, action: bool):
     """Creates an interaction in the database."""
     cursor.execute(f"INSERT INTO interactions (uid, pid, action) VALUES ({uid}, {pid}, {action})")
 
+def get_posts(page: int = 0):
+    """Returns a list of posts."""
+    posts = []
+    cursor.callproc("get_posts_by_page", [page])
+    # Store the results from the first result set
+    query_results = cursor.stored_results()
+    # Get the first result set
+    results = next(query_results).fetchall()
+    # print(results)
+    for r in results:
+        posts.append(Post(word=r[1], pid=r[0], definition=r[2], uid=r[6], upvotes=r[3], downvotes=r[4], created=r[5]))
+        # posts.append({
+        #     "pid": r[0],
+        #     "word": r[1],xw
+        #     "definition": r[2],
+        #     "upvotes": r[3],
+        #     "downvotes": r[4],
+        #     "created": r[5],
+        #     "uid": r[6]
+        # })
+    cursor.nextset()
+    return posts
+
+def get_posts_by_user(uid: int):
+    """Returns a list of posts."""
+    posts = []
+    cursor.callproc("get_posts_by_user", [uid])
+    # Store the results from the first result set
+    query_results = cursor.stored_results()
+    # Get the first result set
+    results = next(query_results).fetchall()
+    # print(results)
+    for r in results:
+        posts.append(Post(word=r[1], pid=r[0], definition=r[2], uid=r[6], upvotes=r[3], downvotes=r[4], created=r[5]))
+        # posts.append({
+        #     "pid": r[0],
+        #     "word": r[1],xw
+        #     "definition": r[2],
+        #     "upvotes": r[3],
+        #     "downvotes": r[4],
+        #     "created": r[5],
+        #     "uid": r[6]
+        # })
+    cursor.nextset()
+    return posts
+
 def login_user(name: str, password: str):
     """Logs in a user."""
     hashed_password = hashlib.sha256(password.encode()).hexdigest()
-    print(f"Hashed password: {hashed_password}")
+    # print(f"Hashed password: {hashed_password}")
     query = f"SELECT name FROM users WHERE name = '{name}' AND password = '{hashed_password}'"
     cursor.execute(query)
     output = cursor.fetchall()
-    if len(output) == 0:
+    if output is None or len(output) == 0:
+        print("User Not Found")
         return False
-    
+    # print(output)
     if output[0][0] == name:
+        print("User Found: ", output[0])
         return True
+    print("User Not Found")
     return False
 
-def get_posts(uid):
-    """Returns all posts from a specific user by uid."""
-    query = """
-    SELECT pid, word, definition, upvotes, downvotes, uid
-    FROM posts
-    WHERE uid = %s
-    """
-    cursor.execute(query, (uid,))
-    entries = cursor.fetchall()
-    print(f"Fetched posts for uid {uid}: {entries}")  # Debugging line
-    posts = [Post(pid, word, definition, uid, upvotes, downvotes) for pid, word, definition, upvotes, downvotes, uid in entries]
-    return posts
+def get_user(name: str):
+    """Returns a user."""
+    query = f"SELECT * FROM users WHERE name = '{name}'"
+    cursor.execute(query)
+    output = cursor.fetchall()
+    if output is None or len(output) == 0:
+        print("User Not Found")
+        return None
+    return output[0]
 
-def get_recent_posts(limit=10):
-    """Returns the most recent posts, limited to a specified number."""
-    query = "SELECT pid, word, definition, uid, upvotes, downvotes FROM posts ORDER BY pid DESC LIMIT %s"
-    cursor.execute(query, (limit,))
-    entries = cursor.fetchall()
-    posts = [Post(pid, word, definition, uid, upvotes, downvotes) for pid, word, definition, uid, upvotes, downvotes in entries]
-    return posts
+# def get_posts(username):
+#     """Returns all posts from a specific user."""
+#     posts = []
+#     query = "SELECT p.word, p.definition, u.uid, p.upvotes, p.downvotes FROM posts AS p INNER JOIN users AS u ON p.uid = u.uid WHERE u.name = %s"
+#     cursor.execute(query, (username,))
+#     entries = cursor.fetchall()
+#     for word, definition, uid, upvotes, downvotes in entries:
+#         post = Post(word, definition, uid, upvotes, downvotes)
+#         print(f"Word: {word}, Definition: {definition}, Upvotes: {upvotes}, Downvotes: {downvotes}")
+#         posts.append(post)
+#     return posts
+
+# def get_recent_posts(limit=10):
+#     """Returns the most recent posts, limited to a specified number."""
+#     query = "SELECT pid, word, definition, uid, upvotes, downvotes, created FROM posts ORDER BY pid DESC LIMIT %s"
+#     cursor.execute(query, (limit,))
+#     entries = cursor.fetchall()
+#     posts = [Post(pid, word, definition, uid, upvotes, downvotes, created) for pid, word, definition, uid, upvotes, downvotes in entries]
+#     return posts
 
 def upvote_post(pid: int):
     """Increases the upvote count for a post."""
@@ -145,9 +209,12 @@ if __name__ == "__main__":
     
     try:
         init_cursor.execute(db_setup_tables.create_post_procedure)
-        print("Post procedure created successfully.")
-    except mysql.connector.errors.ProgrammingError:
+        init_cursor.execute(db_setup_tables.get_posts_user_procedure)
+        init_cursor.execute(db_setup_tables.get_posts_page_procedure)
+        print("Post procedures created successfully.")
+    except mysql.connector.errors.ProgrammingError as e:
         print("Post procedure already exists")
+        print(e)
         
     print("Procedures created successfully.")
     

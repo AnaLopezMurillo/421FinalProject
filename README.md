@@ -10,12 +10,13 @@ Docker with MySQL instance
 To setup the database for the first time, run:
 ```sh
 source setup.sh
-```
+``` 
 
-Once you've done this, you can run the db by running
+You can run the database at anytime after the intial setup with this:
 ```sh
 source db.sh
 ```
+> Note: If you've just run `setup.sh`, and you haven't run `stop.sh` yet, you don't need to run `db.sh` until the next time you want to start the database after properly closing it.
 
 Once you're done with the database, or if you want to close docker or shut down your computer, run the following:
 ```sh

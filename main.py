@@ -1,21 +1,14 @@
 import PySimpleGUI as sg
 import db
+from post import Post
 
 db.init()
-cursor = db.get_cursor()
 
 # vars
 username = ''
 password = ''
+uid = ''
 
-class Post:
-    def __init__(self, pid, word, definition, uid, upvotes, downvotes):
-        self.pid = pid
-        self.word = word
-        self.definition = definition
-        self.uid = uid
-        self.upvotes = upvotes
-        self.downvotes = downvotes
 
 def login():
     return [
@@ -98,7 +91,7 @@ window = sg.Window("Router Example", login(), finalize=True)
 window['-PASSWORD-'].bind("<Return>", "Login")
 
 # Initialize posts
-posts = db.get_recent_posts()
+posts = db.get_posts(0)
 
 # Event loop for routing
 while True:
@@ -110,51 +103,57 @@ while True:
         index = int(event.split("_")[1])
         post = posts[index]
         db.upvote_post(post.pid)
-        posts = db.get_recent_posts()  # Refresh posts
+        posts = db.get_posts()  # Refresh posts
         window.close()
         window = sg.Window("Home", home(posts), finalize=True)
     elif event.startswith("DOWNVOTE_"):
         index = int(event.split("_")[1])
         post = posts[index]
         db.downvote_post(post.pid)
-        posts = db.get_recent_posts()  # Refresh posts
+        posts = db.get_posts()  # Refresh posts
         window.close()
         window = sg.Window("Home", home(posts), finalize=True)
     elif event == "Login" or event == ("-PASSWORD-" + "Login"):
         username = values['-USERNAME-']
         password = values['-PASSWORD-']
         if db.login_user(username, password):
-            user_id = db.get_user_id(username)  # Fetch uid after login
+            uid = db.get_user(username)[0]
             window.close()
-            window = sg.Window("Home", home(db.get_recent_posts()), finalize=True)
-            window['-USERNAME-DISPLAY-'].update(username + "'s Home")
+            window = sg.Window("Home", home(posts), finalize=True)
+            # this changes the title of the window to the user's name
+            # probably also how we will want to update user info through GET calls
+            window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
         else:
             db.create_user(username, 0, password)
-            user_id = db.get_user_id(username)  # Fetch uid after creating user
+            uid = db.get_user(username)[0]
             window.close()
-            window = sg.Window("Home", home(db.get_recent_posts()), finalize=True)
-            window['-USERNAME-DISPLAY-'].update(username + "'s Home")
+            window = sg.Window("Home", home(posts), finalize=True)
+            window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
 
     elif event == "Profile":
-        user_posts = db.get_posts(user_id)  # Use uid instead of username
+        user_posts = db.get_posts_by_user(uid)  # Use uid instead of username
         window.close()
         window = sg.Window("Profile", profile(user_posts), finalize=True)
     elif event == "Back to Login":
         window.close()
-        window = sg.Window("Login", login())
+        window = sg.Window("Login", login(), finalize=True)
+        window['-PASSWORD-'].bind("<Return>", "Login")
     elif event == "Home":
         window.close()
-        window = sg.Window("Home", home(db.get_recent_posts()), finalize=True)
+        window = sg.Window("Home", home(db.get_posts()), finalize=True)
         window['-USERNAME-DISPLAY-'].update(username + "'s Home")
     elif event == "Add Record":
         window.close()
         window = sg.Window("Record", add_record(), finalize=True)
+        
     elif event == "Submit":
         term = values['-TERM-']
         definition = values['-DEF-']
         if term and definition:
             try:
-                db.create_post(term, definition, user_id)  # Use the correct uid
+                db.create_post(term, definition, uid)
+
+                # Update the UI with a success message
                 sg.popup(f"Term '{term}' added successfully!")
                 window['-DEF-'].update("")
                 window['-TERM-'].update("")
