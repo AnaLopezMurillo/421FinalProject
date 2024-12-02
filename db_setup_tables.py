@@ -60,7 +60,7 @@ get_posts_user_procedure = """CREATE PROCEDURE get_posts_by_user(IN uid INT)
 BEGIN
     SELECT * FROM posts P 
     WHERE P.uid = uid
-    ORDER BY created DESC;
+    ORDER BY created DESC;e
 END
 """
 
