@@ -38,12 +38,19 @@ def create_user(name: str, score: int, password: str):
     if not login_user(name, password):
         cursor.execute(f"INSERT INTO users (name, score, password) VALUES ('{name}', {score}, '{hashed_password}')")
         mydb.commit()
-    
+      
 def create_post(word: str, definition: str, uid: int):
     """Creates a post in the database."""
-    cursor.execute("CALL create_post(%s, %s, %s)", (word, definition, uid))
-    # cursor.execute(f"INSERT INTO posts (word, definition, upvotes, downvotes, uid) VALUES ('{word}', '{definition}', {upvotes}, {downvotes}, {uid})")
-    
+    try:
+        # Use the stored procedure if it exists
+        query = "CALL create_post(%s, %s, %s)"
+        cursor.execute(query, (word, definition, uid))
+        mydb.commit()
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        raise
+
+
 def create_interaction(uid: int, pid: int, action: bool):
     """Creates an interaction in the database."""
     cursor.execute(f"INSERT INTO interactions (uid, pid, action) VALUES ({uid}, {pid}, {action})")

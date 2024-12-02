@@ -82,14 +82,25 @@ while True:
         window.close()
         window = sg.Window("Record", add_record(), finalize=True)
     elif event == "Submit":
-        # this is where we push information to for new record to database
-        print("Term: " +  str(values['-TERM-']))
-        print("Definition: " +  str(values['-DEF-']))
+    # Get the term and definition from the input fields
+        term = values['-TERM-']
+        definition = values['-DEF-']
 
-        window['-DEF-'].update("")
-        window['-TERM-'].update("")
-        window['-ADDRECORD-DISPLAY-'].update("Term " + str(values['-TERM-']) + " added!")
-        
+        if term and definition:
+            try:
+                # Use a placeholder user ID (e.g., 1) or retrieve the logged-in user's ID
+                user_id = 1
+                db.create_post(term, definition, user_id)
+
+                # Update the UI with a success message
+                sg.popup(f"Term '{term}' added successfully!")
+                window['-DEF-'].update("")
+                window['-TERM-'].update("")
+                window['-ADDRECORD-DISPLAY-'].update(f"Term '{term}' added!")
+            except Exception as e:
+                sg.popup(f"Error adding term: {e}")
+        else:
+            sg.popup("Please fill in both Term and Definition fields.") 
 
     # name = values[0]
     # password = values[1]
