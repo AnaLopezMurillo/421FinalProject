@@ -103,14 +103,14 @@ while True:
     elif event.startswith("UPVOTE_"):
         index = int(event.split("_")[1])
         post = posts[index]
-        db.upvote_post(post.pid)
+        db.upvote_post(uid, post.pid)
         posts = db.get_posts()  # Refresh posts
         window.close()
         window = sg.Window("Home", home(posts), finalize=True)
     elif event.startswith("DOWNVOTE_"):
         index = int(event.split("_")[1])
         post = posts[index]
-        db.downvote_post(post.pid)
+        db.downvote_post(uid, post.pid)
         posts = db.get_posts()  # Refresh posts
         window.close()
         window = sg.Window("Home", home(posts), finalize=True)

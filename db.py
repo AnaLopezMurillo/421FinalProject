@@ -57,9 +57,35 @@ def create_post(word: str, definition: str, uid: int):
         raise
 
 
-def create_interaction(uid: int, pid: int, action: bool):
-    """Creates an interaction in the database."""
-    cursor.execute(f"INSERT INTO interactions (uid, pid, action) VALUES ({uid}, {pid}, {action})")
+def create_interaction(uid: int, pid: int, action: bool) -> int:
+    """Creates an interaction in the database. 
+
+    Returns: 0 if no change, -1 if swaps, 1 if a new interaction is created    
+        
+    """
+    # check if the user has already interacted
+    # if not, create new interaction
+    # if so, check what the interaction was
+        # if they had previously downvoted and now are trying to upvote, swap
+        # and visa versa
+        # otherwise just don't let them do it
+    cursor.execute(f"SELECT u.uid, i.action FROM users u INNER JOIN interactions i ON i.uid = u.uid")
+    entries = cursor.fetchall()
+    if len(entries):
+        print("User has already interacted")
+        if(entries[0][1] != action):
+            # update this entry to match the new action
+            print("Swapping action")
+            cursor.execute(f"UPDATE interactions i SET i.action = {action} WHERE i.uid = {entries[0][0]}")
+            mydb.commit()
+            return -1
+        else:
+            print("User has already done that action")
+            return 0
+    else:   
+        cursor.execute(f"INSERT INTO interactions (uid, pid, action) VALUES ({uid}, {pid}, {action})")
+        mydb.commit()
+        return 1
 
 def get_posts(page: int = 0):
     """Returns a list of posts."""
@@ -154,15 +180,33 @@ def get_user(name: str):
 #     posts = [Post(pid, word, definition, uid, upvotes, downvotes, created) for pid, word, definition, uid, upvotes, downvotes in entries]
 #     return posts
 
-def upvote_post(pid: int):
+def upvote_post(uid: int, pid: int):
     """Increases the upvote count for a post."""
-    query = "UPDATE posts SET upvotes = upvotes + 1 WHERE pid = %s"
+    result = create_interaction(uid, pid, True)
+    if result == -1:
+        # swap upvote to downvote
+        query = "UPDATE posts SET upvotes = upvotes + 1, downvotes = downvotes - 1 WHERE pid = %s"
+    elif result == 1:
+        # add new upvote
+        query = "UPDATE posts SET upvotes = upvotes + 1 WHERE pid = %s"
+    elif result == 0:
+        # no change, they've already upvoted
+        return
     cursor.execute(query, (pid,))
     mydb.commit()
 
-def downvote_post(pid: int):
+def downvote_post(uid: int, pid: int):
     """Increases the downvote count for a post."""
-    query = "UPDATE posts SET downvotes = downvotes + 1 WHERE pid = %s"
+    result = create_interaction(uid, pid, False)
+    if result == -1:
+        # swap upvote to downvote
+        query = "UPDATE posts SET downvotes = downvotes + 1, upvotes = upvotes - 1 WHERE pid = %s"
+    elif result == 1:
+        # add new upvote
+        query = "UPDATE posts SET downvotes = downvotes + 1 WHERE pid = %s"
+    elif result == 0:
+        # no change, they've already upvoted
+        return
     cursor.execute(query, (pid,))
     mydb.commit()
 
