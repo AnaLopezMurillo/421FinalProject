@@ -23,10 +23,12 @@ def home():
         [sg.Button("Exit")]
     ]
 
-def profile():
+def profile(posts):
+    post_elements = [[sg.Text(f"{post.word}: {post.definition} (Upvotes: {post.upvotes}, Downvotes: {post.downvotes})")] for post in posts]
     return [
         [sg.Button("Home"), sg.Text("Profile", font='bold', justification='center', expand_x=True)],
         [sg.Text("Profile info + scores will go here")],
+        *post_elements,
         [sg.Button("Exit")]
     ]
 
@@ -68,7 +70,7 @@ while True:
 
     elif event == "Profile":
         window.close()
-        window = sg.Window("Profile", profile())
+        window = sg.Window("Profile", profile(db.get_posts(username)))
     elif event == "Back to Login":
         window.close()
         window = sg.Window("Login", login())

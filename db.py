@@ -3,6 +3,8 @@ import mysql.connector
 import db_setup_tables
 import hashlib
 
+from post import Post
+
 
 # DB connection info
 DB_HOST = "localhost"
@@ -59,6 +61,18 @@ def login_user(name: str, password: str):
     if output[0][0] == name:
         return True
     return False
+
+def get_posts(username):
+    """Returns all posts from a specific user."""
+    posts = []
+    query = "SELECT p.word, p.definition, u.uid, p.upvotes, p.downvotes FROM posts AS p INNER JOIN users AS u ON p.uid = u.uid WHERE u.name = %s"
+    cursor.execute(query, (username,))
+    entries = cursor.fetchall()
+    for word, definition, uid, upvotes, downvotes in entries:
+        post = Post(word, definition, uid, upvotes, downvotes)
+        print(f"Word: {word}, Definition: {definition}, Upvotes: {upvotes}, Downvotes: {downvotes}")
+        posts.append(post)
+    return posts
 
 if __name__ == "__main__":
     # Initializes the database and creates the tables.
