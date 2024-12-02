@@ -58,7 +58,13 @@ while True:
             window = sg.Window("Home", home(), finalize=True)
             # this changes the title of the window to the user's name
             # probably also how we will want to update user info through GET calls
-            window['-USERNAME-DISPLAY-'].update(username + "'s Home")   
+            window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
+        else:
+            # User not yet initialized
+            db.create_user(username, 0, password)
+            window.close()
+            window = sg.Window("Home", home(), finalize=True)
+            window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
 
     elif event == "Profile":
         window.close()

@@ -29,10 +29,13 @@ def get_cursor():
 def close_cursor():
     """Closes the cursor."""
     cursor.close()
-  
+
 def create_user(name: str, score: int, password: str):
-    """Creates a user in the database."""
-    cursor.execute(f"INSERT INTO users (name, score, password) VALUES ('{name}', {score}, '{password}')")
+    """Creates a user in the database.""" 
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()   
+    if not login_user(name, password):
+        cursor.execute(f"INSERT INTO users (name, score, password) VALUES ('{name}', {score}, '{hashed_password}')")
+        mydb.commit()
     
 def create_post(word: str, definition: str, uid: int):
     """Creates a post in the database."""
@@ -52,7 +55,7 @@ def login_user(name: str, password: str):
     output = cursor.fetchall()
     if len(output) == 0:
         return False
-    print(output)
+    
     if output[0][0] == name:
         return True
     return False
