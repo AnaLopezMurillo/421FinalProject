@@ -8,6 +8,15 @@ cursor = db.get_cursor()
 username = ''
 password = ''
 
+class Post:
+    def __init__(self, pid, word, definition, uid, upvotes, downvotes):
+        self.pid = pid
+        self.word = word
+        self.definition = definition
+        self.uid = uid
+        self.upvotes = upvotes
+        self.downvotes = downvotes
+
 def login():
     return [
         [sg.Text("Login Page", font='Bold', justification='center', expand_x=True)],
@@ -16,18 +25,61 @@ def login():
         [sg.Button("Exit"), sg.Text("", expand_x=True), sg.Button("Login")]
     ]
 
-def home():
+def home(posts):
+    if not posts:
+        post_elements = [[sg.Text("No posts available.", justification='center', expand_x=True)]]
+    else:
+        post_elements = []
+        for i, post in enumerate(posts[:10]):  # Limit to 10 posts
+            if i % 2 == 0:
+                post_elements.append([])  # Start a new row every 2 posts
+            post_elements[-1].append(
+                sg.Frame(
+                    layout=[
+                        [sg.Text(f"Term: {post.word}", font='bold')],
+                        [sg.Text(f"Definition: {post.definition}")],
+                        [sg.Text(f"Upvotes: {post.upvotes}", text_color='#32CD32'), sg.Text(f"Downvotes: {post.downvotes}", text_color='red')],
+                        [sg.Button("Upvote", key=f"UPVOTE_{i}"), sg.Button("Downvote", key=f"DOWNVOTE_{i}")]
+                    ],
+                    title="Post",
+                    relief=sg.RELIEF_SUNKEN,
+                    pad=(5, 5),
+                    border_width=2
+                )
+            )
+
     return [
-        [sg.Button("Back to Login"), sg.Text("", key='-USERNAME-DISPLAY-', font='bold', justification='center', expand_x=True), sg.Button("Profile"),],
-        [sg.Text("Posts will go here"),sg.Button("Add Record"),],
-        [sg.Button("Exit")]
+        [sg.Button("Back to Login"), sg.Text("", key='-USERNAME-DISPLAY-', font='bold', justification='center', expand_x=True), sg.Button("Profile")],
+        [sg.Text("Recent Posts", font='bold', justification='center', expand_x=True)],
+        *post_elements,
+        [sg.Button("Add Record"), sg.Button("Exit")]
     ]
 
 def profile(posts):
-    post_elements = [[sg.Text(f"{post.word}: {post.definition} (Upvotes: {post.upvotes}, Downvotes: {post.downvotes})")] for post in posts]
+    if not posts:
+        post_elements = [[sg.Text("No posts available.", justification='center', expand_x=True)]]
+    else:
+        post_elements = []
+        for i, post in enumerate(posts[:10]):  # Limit to 10 posts
+            if i % 2 == 0:
+                post_elements.append([])  # Start a new row every 2 posts
+            post_elements[-1].append(
+                sg.Frame(
+                    layout=[
+                        [sg.Text(f"Term: {post.word}", font='bold')],
+                        [sg.Text(f"Definition: {post.definition}")],
+                        [sg.Text(f"Upvotes: {post.upvotes}", text_color='#32CD32'), sg.Text(f"Downvotes: {post.downvotes}", text_color='red')]
+                    ],
+                    title="Post",
+                    relief=sg.RELIEF_SUNKEN,
+                    pad=(5, 5),
+                    border_width=2
+                )
+            )
+
     return [
         [sg.Button("Home"), sg.Text("Profile", font='bold', justification='center', expand_x=True)],
-        [sg.Text("Profile info + scores will go here")],
+        [sg.Text("Your Posts", font='bold', justification='center', expand_x=True)],
         *post_elements,
         [sg.Button("Exit")]
     ]
@@ -45,54 +97,64 @@ def add_record():
 window = sg.Window("Router Example", login(), finalize=True)
 window['-PASSWORD-'].bind("<Return>", "Login")
 
+# Initialize posts
+posts = db.get_recent_posts()
+
 # Event loop for routing
 while True:
     event, values = window.read()
 
     if event == sg.WINDOW_CLOSED or event == "Exit":
         break
+    elif event.startswith("UPVOTE_"):
+        index = int(event.split("_")[1])
+        post = posts[index]
+        db.upvote_post(post.pid)
+        posts = db.get_recent_posts()  # Refresh posts
+        window.close()
+        window = sg.Window("Home", home(posts), finalize=True)
+    elif event.startswith("DOWNVOTE_"):
+        index = int(event.split("_")[1])
+        post = posts[index]
+        db.downvote_post(post.pid)
+        posts = db.get_recent_posts()  # Refresh posts
+        window.close()
+        window = sg.Window("Home", home(posts), finalize=True)
     elif event == "Login" or event == ("-PASSWORD-" + "Login"):
-        # grab user and password
         username = values['-USERNAME-']
         password = values['-PASSWORD-']
         if db.login_user(username, password):
+            user_id = db.get_user_id(username)  # Fetch uid after login
             window.close()
-            window = sg.Window("Home", home(), finalize=True)
-            # this changes the title of the window to the user's name
-            # probably also how we will want to update user info through GET calls
-            window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
+            window = sg.Window("Home", home(db.get_recent_posts()), finalize=True)
+            window['-USERNAME-DISPLAY-'].update(username + "'s Home")
         else:
-            # User not yet initialized
             db.create_user(username, 0, password)
+            user_id = db.get_user_id(username)  # Fetch uid after creating user
             window.close()
-            window = sg.Window("Home", home(), finalize=True)
-            window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
+            window = sg.Window("Home", home(db.get_recent_posts()), finalize=True)
+            window['-USERNAME-DISPLAY-'].update(username + "'s Home")
 
     elif event == "Profile":
+        user_posts = db.get_posts(user_id)  # Use uid instead of username
         window.close()
-        window = sg.Window("Profile", profile(db.get_posts(username)))
+        window = sg.Window("Profile", profile(user_posts), finalize=True)
     elif event == "Back to Login":
         window.close()
         window = sg.Window("Login", login())
     elif event == "Home":
         window.close()
-        window = sg.Window("Home", home(), finalize=True)
+        window = sg.Window("Home", home(db.get_recent_posts()), finalize=True)
         window['-USERNAME-DISPLAY-'].update(username + "'s Home")
     elif event == "Add Record":
         window.close()
         window = sg.Window("Record", add_record(), finalize=True)
     elif event == "Submit":
-    # Get the term and definition from the input fields
         term = values['-TERM-']
         definition = values['-DEF-']
-
         if term and definition:
             try:
-                # Use a placeholder user ID (e.g., 1) or retrieve the logged-in user's ID
-                user_id = 1
-                db.create_post(term, definition, user_id)
-
-                # Update the UI with a success message
+                db.create_post(term, definition, user_id)  # Use the correct uid
                 sg.popup(f"Term '{term}' added successfully!")
                 window['-DEF-'].update("")
                 window['-TERM-'].update("")
@@ -100,7 +162,7 @@ while True:
             except Exception as e:
                 sg.popup(f"Error adding term: {e}")
         else:
-            sg.popup("Please fill in both Term and Definition fields.") 
+            sg.popup("Please fill in both Term and Definition fields.")
 
     # name = values[0]
     # password = values[1]

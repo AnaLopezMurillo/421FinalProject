@@ -69,17 +69,47 @@ def login_user(name: str, password: str):
         return True
     return False
 
-def get_posts(username):
-    """Returns all posts from a specific user."""
-    posts = []
-    query = "SELECT p.word, p.definition, u.uid, p.upvotes, p.downvotes FROM posts AS p INNER JOIN users AS u ON p.uid = u.uid WHERE u.name = %s"
-    cursor.execute(query, (username,))
+def get_posts(uid):
+    """Returns all posts from a specific user by uid."""
+    query = """
+    SELECT pid, word, definition, upvotes, downvotes, uid
+    FROM posts
+    WHERE uid = %s
+    """
+    cursor.execute(query, (uid,))
     entries = cursor.fetchall()
-    for word, definition, uid, upvotes, downvotes in entries:
-        post = Post(word, definition, uid, upvotes, downvotes)
-        print(f"Word: {word}, Definition: {definition}, Upvotes: {upvotes}, Downvotes: {downvotes}")
-        posts.append(post)
+    print(f"Fetched posts for uid {uid}: {entries}")  # Debugging line
+    posts = [Post(pid, word, definition, uid, upvotes, downvotes) for pid, word, definition, upvotes, downvotes, uid in entries]
     return posts
+
+def get_recent_posts(limit=10):
+    """Returns the most recent posts, limited to a specified number."""
+    query = "SELECT pid, word, definition, uid, upvotes, downvotes FROM posts ORDER BY pid DESC LIMIT %s"
+    cursor.execute(query, (limit,))
+    entries = cursor.fetchall()
+    posts = [Post(pid, word, definition, uid, upvotes, downvotes) for pid, word, definition, uid, upvotes, downvotes in entries]
+    return posts
+
+def upvote_post(pid: int):
+    """Increases the upvote count for a post."""
+    query = "UPDATE posts SET upvotes = upvotes + 1 WHERE pid = %s"
+    cursor.execute(query, (pid,))
+    mydb.commit()
+
+def downvote_post(pid: int):
+    """Increases the downvote count for a post."""
+    query = "UPDATE posts SET downvotes = downvotes + 1 WHERE pid = %s"
+    cursor.execute(query, (pid,))
+    mydb.commit()
+
+def get_user_id(username: str):
+    """Fetches the user ID (uid) for a given username."""
+    query = "SELECT uid FROM users WHERE name = %s"
+    cursor.execute(query, (username,))
+    result = cursor.fetchone()
+    if result:
+        return result[0]
+    return None
 
 if __name__ == "__main__":
     # Initializes the database and creates the tables.
