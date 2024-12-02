@@ -235,6 +235,7 @@ if __name__ == "__main__":
     init_cursor.execute(f"USE {DB_NAME}")
     try:
         init_cursor.execute(db_setup_tables.create_user_table)
+        init_cursor.execute(db_setup_tables.create_trigger_name)
         print("Users table created successfully.")
     except mysql.connector.errors.ProgrammingError:
         print("Users table already exists")
