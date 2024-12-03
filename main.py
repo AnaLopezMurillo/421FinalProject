@@ -140,11 +140,14 @@ while True:
             # probably also how we will want to update user info through GET calls
             window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
         else:
-            db.create_user(username, 0, password)
-            uid = db.get_user(username)[0]
-            window.close()
-            window = sg.Window("Home", home(posts), finalize=True)
-            window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
+            if db.create_user(username, 0, password):
+                uid = db.get_user(username)[0]
+                window.close()
+                window = sg.Window("Home", home(posts), finalize=True)
+                window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
+                sg.popup("You didn't have a profile, so we made one for you! I hope you remember that password...")
+            else:
+                sg.popup("Error: Someone is already using that username!")
 
     elif event == "Profile":
         user_posts = db.get_posts_by_user(uid)  # Use uid instead of username

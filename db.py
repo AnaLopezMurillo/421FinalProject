@@ -39,11 +39,15 @@ def close_cursor():
 
 def create_user(name: str, score: int, password: str):
     """Creates a user in the database.""" 
-    hashed_password = hashlib.sha256(password.encode()).hexdigest()   
+    hashed_password = hashlib.sha256(password.encode()).hexdigest()  
     if not login_user(name, password):
-        cursor.execute(f"INSERT INTO users (name, score, password) VALUES ('{name}', {score}, '{hashed_password}')")
+        try:
+            cursor.execute(f"INSERT INTO users (name, score, password) VALUES ('{name}', {score}, '{hashed_password}')")
+        except mysql.connector.errors.IntegrityError:
+            return False
         print(f"User {name} created successfully.")
         mydb.commit()
+        return True
       
 def create_post(word: str, definition: str, uid: int):
     """Creates a post in the database."""
