@@ -102,15 +102,19 @@ while True:
         break
     elif event.startswith("UPVOTE_"):
         index = int(event.split("_")[1])
+        posts = db.get_posts()  # Refresh posts
         post = posts[index]
-        db.upvote_post(uid, post.pid)
+        if not db.upvote_post(uid, post.pid):
+            sg.popup("You have already upvoted this post.")
         posts = db.get_posts()  # Refresh posts
         window.close()
         window = sg.Window("Home", home(posts), finalize=True)
     elif event.startswith("DOWNVOTE_"):
         index = int(event.split("_")[1])
+        posts = db.get_posts()  # Refresh posts
         post = posts[index]
-        db.downvote_post(uid, post.pid)
+        if not db.downvote_post(uid, post.pid):
+            sg.popup("You have already downvoted this post.")
         posts = db.get_posts()  # Refresh posts
         window.close()
         window = sg.Window("Home", home(posts), finalize=True)

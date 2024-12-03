@@ -69,14 +69,14 @@ def create_interaction(uid: int, pid: int, action: bool) -> int:
         # if they had previously downvoted and now are trying to upvote, swap
         # and visa versa
         # otherwise just don't let them do it
-    cursor.execute(f"SELECT u.uid, i.action FROM users u INNER JOIN interactions i ON i.uid = u.uid")
+    cursor.execute(f"SELECT i.uid, i.action FROM interactions i WHERE i.uid = {uid} AND i.pid = {pid}")
     entries = cursor.fetchall()
-    if len(entries):
-        print("User has already interacted")
+    if len(entries) > 0:
+        print(f"User has already interacted with {pid}")
         if(entries[0][1] != action):
             # update this entry to match the new action
             print("Swapping action")
-            cursor.execute(f"UPDATE interactions i SET i.action = {action} WHERE i.uid = {entries[0][0]}")
+            cursor.execute(f"UPDATE interactions i SET i.action = {action} WHERE i.uid = {uid}")
             mydb.commit()
             return -1
         else:
@@ -181,7 +181,7 @@ def get_user(name: str):
 #     return posts
 
 def upvote_post(uid: int, pid: int):
-    """Increases the upvote count for a post."""
+    """Increases the upvote count for a post. Returns True if successful, False otherwise."""
     result = create_interaction(uid, pid, True)
     if result == -1:
         # swap upvote to downvote
@@ -191,9 +191,11 @@ def upvote_post(uid: int, pid: int):
         query = "UPDATE posts SET upvotes = upvotes + 1 WHERE pid = %s"
     elif result == 0:
         # no change, they've already upvoted
-        return
+        return False
     cursor.execute(query, (pid,))
     mydb.commit()
+    print("")
+    return True
 
 def downvote_post(uid: int, pid: int):
     """Increases the downvote count for a post."""
@@ -206,9 +208,11 @@ def downvote_post(uid: int, pid: int):
         query = "UPDATE posts SET downvotes = downvotes + 1 WHERE pid = %s"
     elif result == 0:
         # no change, they've already upvoted
-        return
+        return False
     cursor.execute(query, (pid,))
     mydb.commit()
+    print("")
+    return True
 
 def get_user_id(username: str):
     """Fetches the user ID (uid) for a given username."""
@@ -235,7 +239,7 @@ if __name__ == "__main__":
     init_cursor.execute(f"USE {DB_NAME}")
     try:
         init_cursor.execute(db_setup_tables.create_user_table)
-        init_cursor.execute(db_setup_tables.create_trigger_name)
+        # init_cursor.execute(db_setup_tables.create_trigger_name)
         print("Users table created successfully.")
     except mysql.connector.errors.ProgrammingError:
         print("Users table already exists")
@@ -268,6 +272,17 @@ if __name__ == "__main__":
         print(e)
         
     print("Procedures created successfully.")
+    
+    try:
+        init_cursor.execute(db_setup_tables.new_interaction_trigger)
+        print("New Interaction Trigger created successfully.")
+        init_cursor.execute(db_setup_tables.update_interaction_trigger)
+        print("Update Interaction Trigger created successfully.")
+        init_cursor.execute(db_setup_tables.delete_interaction_trigger)
+        print("Delete Interaction Trigger created successfully.")
+    except mysql.connector.errors.ProgrammingError:
+        print("You are trying to create a trigger that already exists, or your query is wrong.")
+    
     
     try:
         init_cursor.execute("INSERT INTO users (name, password) VALUES ('test', '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08')")
