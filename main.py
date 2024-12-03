@@ -147,7 +147,7 @@ while True:
                 window['-USERNAME-DISPLAY-'].update(username + "'s Home") 
                 sg.popup("You didn't have a profile, so we made one for you! I hope you remember that password...")
             else:
-                sg.popup("Error: Someone is already using that username!")
+                sg.popup("Error: This username is already taken.")
 
     elif event == "Profile":
         user_posts = db.get_posts_by_user(uid)  # Use uid instead of username
