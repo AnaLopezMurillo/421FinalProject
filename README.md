@@ -66,3 +66,11 @@ Procedure:
 - Profile
     - posts you've interacted 
     - shows your upvotes/downvotes
+
+
+## Further Improvements
+- Add next and previous page for getting posts
+- Add search bar for posts
+- Add score to user profiles
+- Make it look better?
+- Debug weird down/upvote interaction
